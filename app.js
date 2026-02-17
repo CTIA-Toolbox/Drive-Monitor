@@ -22,35 +22,69 @@ async function initializeGapiClient() {
     discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
   });
   console.log("Drive API ready");
+  
+  // Handle redirect callback from OAuth
+  handleRedirectCallback();
+}
+
+// ===============================
+// HANDLE OAUTH REDIRECT CALLBACK
+// ===============================
+function handleRedirectCallback() {
+  const hash = window.location.hash;
+  if (!hash) return;
+  
+  const params = new URLSearchParams(hash.substring(1));
+  const accessToken = params.get('access_token');
+  
+  if (accessToken) {
+    const tokenResponse = {
+      access_token: accessToken,
+      expires_in: params.get('expires_in'),
+      token_type: params.get('token_type'),
+      scope: params.get('scope')
+    };
+    
+    // Determine which account based on state (stored in sessionStorage)
+    const authType = sessionStorage.getItem('authType');
+    
+    if (authType === 'old') {
+      oldElsToken = tokenResponse;
+      updateResults("OldELS Connected. Monitoring every 60s...");
+      startMonitoring();
+    } else if (authType === 'new') {
+      newElsToken = tokenResponse;
+      updateResults("NewELS Connected. Monitoring every 60s...");
+      startMonitoring();
+    }
+    
+    // Clean up URL
+    window.history.replaceState(null, null, window.location.pathname);
+    sessionStorage.removeItem('authType');
+  }
 }
 
 // ===============================
 // AUTH HANDLERS
 // ===============================
 function authenticateOld() {
+  sessionStorage.setItem('authType', 'old');
   const tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
-    prompt: 'select_account', 
-    callback: (tokenResponse) => {
-      oldElsToken = tokenResponse;
-      updateResults("OldELS Connected. Monitoring every 60s...");
-      startMonitoring();
-    },
+    prompt: 'select_account',
+    ux_mode: 'redirect'
   });
   tokenClient.requestAccessToken();
 }
 
 function authenticateNew() {
+  sessionStorage.setItem('authType', 'new');
   const tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
     prompt: 'select_account',
-    callback: (tokenResponse) => {
-      newElsToken = tokenResponse;
-      updateResults("NewELS Connected. Monitoring every 60s...");
-      startMonitoring();
-    },
+    ux_mode: 'redirect'
   });
   tokenClient.requestAccessToken();
 }
@@ -76,8 +110,8 @@ async function checkDrive(token, label, lastId) {
   try {
     const response = await gapi.client.drive.files.list({
       pageSize: 1,
-      fields: 'files(id, name, modifiedTime)',
-      orderBy: 'modifiedTime desc'
+      fields: 'files(id, name, createdTime)',
+      orderBy: 'createdTime desc'
     });
 
     const latestFile = response.result.files[0];
