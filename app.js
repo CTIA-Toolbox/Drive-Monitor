@@ -5,8 +5,9 @@ const CLIENT_ID = "911024790272-bcttcijd65s399klvdk11baaka2kflcq.apps.googleuser
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
 const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-let oldElsToken = null;
-let newElsToken = null;
+// At the top of app.js, try to load existing tokens from storage
+let oldElsToken = JSON.parse(localStorage.getItem('oldElsToken')) || null;
+let newElsToken = JSON.parse(localStorage.getItem('newElsToken')) || null;
 let oldLastFileId = null;
 let newLastFileId = null;
 
@@ -33,36 +34,34 @@ async function initializeGapiClient() {
 // ===============================
 function handleRedirectCallback() {
   const hash = window.location.hash;
-  if (!hash) return;
+  if (!hash) {
+    // If we just loaded the page without a hash, start monitoring if tokens exist
+    if (oldElsToken || newElsToken) startMonitoring();
+    return;
+  }
   
   const params = new URLSearchParams(hash.substring(1));
   const accessToken = params.get('access_token');
+  const state = params.get('state');
   
   if (accessToken) {
-    const tokenResponse = {
-      access_token: accessToken,
-      expires_in: params.get('expires_in'),
-      token_type: params.get('token_type'),
-      scope: params.get('scope')
-    };
-    
-    // Determine which account based on state parameter
-    const state = params.get('state');
+    const tokenResponse = { access_token: accessToken }; // simplify for storage
     
     if (state === 'old') {
       oldElsToken = tokenResponse;
+      localStorage.setItem('oldElsToken', JSON.stringify(tokenResponse));
       document.getElementById('status-old').classList.add('active');
       updateResults("OldELS Connected. Monitoring every 60s...");
-      startMonitoring();
     } else if (state === 'new') {
       newElsToken = tokenResponse;
+      localStorage.setItem('newElsToken', JSON.stringify(tokenResponse));
       document.getElementById('status-new').classList.add('active');
       updateResults("NewELS Connected. Monitoring every 60s...");
-      startMonitoring();
     }
     
-    // Clean up URL
+    // Clean URL and start
     window.history.replaceState(null, null, window.location.pathname);
+    startMonitoring();
   }
 }
 
@@ -105,14 +104,20 @@ function startMonitoring() {
 }
 
 async function runCheck() {
-  // Use Promise.all to handle both, but we must be careful with the global token
+  updateResults("Checking for updates...");
+
+  // 1. Check Old Drive
   if (oldElsToken) {
+    console.log("Checking OldELS...");
     oldLastFileId = await checkDrive(oldElsToken, "OldELS", oldLastFileId);
   }
-  // Small delay to ensure the GAPI client settles (GAPI is a bit "singleton" heavy)
-  await new Promise(r => setTimeout(r, 500)); 
-  
+
+  // 2. Short pause to let GAPI "breath" between identity swaps
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // 3. Check New Drive
   if (newElsToken) {
+    console.log("Checking NewELS...");
     newLastFileId = await checkDrive(newElsToken, "NewELS", newLastFileId);
   }
 }
