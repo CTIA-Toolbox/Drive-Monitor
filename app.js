@@ -51,10 +51,12 @@ function handleRedirectCallback() {
     
     if (state === 'old') {
       oldElsToken = tokenResponse;
+      document.getElementById('status-old').classList.add('active');
       updateResults("OldELS Connected. Monitoring every 60s...");
       startMonitoring();
     } else if (state === 'new') {
       newElsToken = tokenResponse;
+      document.getElementById('status-new').classList.add('active');
       updateResults("NewELS Connected. Monitoring every 60s...");
       startMonitoring();
     }
@@ -103,12 +105,22 @@ function startMonitoring() {
 }
 
 async function runCheck() {
-  if (oldElsToken) oldLastFileId = await checkDrive(oldElsToken, "OldELS", oldLastFileId);
-  if (newElsToken) newLastFileId = await checkDrive(newElsToken, "NewELS", newLastFileId);
+  // Use Promise.all to handle both, but we must be careful with the global token
+  if (oldElsToken) {
+    oldLastFileId = await checkDrive(oldElsToken, "OldELS", oldLastFileId);
+  }
+  // Small delay to ensure the GAPI client settles (GAPI is a bit "singleton" heavy)
+  await new Promise(r => setTimeout(r, 500)); 
+  
+  if (newElsToken) {
+    newLastFileId = await checkDrive(newElsToken, "NewELS", newLastFileId);
+  }
 }
 
 async function checkDrive(token, label, lastId) {
-  // Set the specific token for THIS account call
+  const statusId = label === "OldELS" ? "status-old" : "status-new";
+  const statusDot = document.getElementById(statusId);
+  
   gapi.client.setToken(token);
 
   try {
@@ -118,19 +130,33 @@ async function checkDrive(token, label, lastId) {
       orderBy: 'createdTime desc'
     });
 
+    // If we reach here, connection is LIVE
+    statusDot.classList.add('active');
+    statusDot.classList.remove('error');
+
     const latestFile = response.result.files[0];
     if (!latestFile) return lastId;
 
-    // Detect Change
-    if (lastId && latestFile.id !== lastId) {
-      const timestamp = new Date().toLocaleTimeString();
-      const msg = `<p><strong>[${timestamp}] ${label}:</strong> New file: ${latestFile.name}</p>`;
-      document.getElementById("results").innerHTML = msg + document.getElementById("results").innerHTML;
+    // Initial baseline setup
+    if (!lastId) {
+      updateResults(`${label}: Monitoring active. Initial file: ${latestFile.name}`);
+      return latestFile.id;
     }
 
-    return latestFile.id;
+    // New File Detection
+    if (latestFile.id !== lastId) {
+      const timestamp = new Date().toLocaleTimeString();
+      const msg = `<p class="new-alert"><strong>[${timestamp}] ${label}:</strong> New file detected: ${latestFile.name}</p>`;
+      document.getElementById("results").innerHTML = msg + document.getElementById("results").innerHTML;
+      return latestFile.id;
+    }
+
+    return lastId;
   } catch (err) {
     console.error(`Error checking ${label}:`, err);
+    // Visual cue that the connection dropped (likely token expired)
+    statusDot.classList.remove('active');
+    statusDot.classList.add('error');
     return lastId;
   }
 }
