@@ -3,6 +3,7 @@
 // ===============================
 const CLIENT_ID = "911024790272-bcttcijd65s399klvdk11baaka2kflcq.apps.googleusercontent.com";
 const SCOPES = "https://www.googleapis.com/auth/drive.readonly";
+const REDIRECT_URI = window.location.origin + window.location.pathname;
 
 let oldElsToken = null;
 let newElsToken = null;
@@ -45,14 +46,14 @@ function handleRedirectCallback() {
       scope: params.get('scope')
     };
     
-    // Determine which account based on state (stored in sessionStorage)
-    const authType = sessionStorage.getItem('authType');
+    // Determine which account based on state parameter
+    const state = params.get('state');
     
-    if (authType === 'old') {
+    if (state === 'old') {
       oldElsToken = tokenResponse;
       updateResults("OldELS Connected. Monitoring every 60s...");
       startMonitoring();
-    } else if (authType === 'new') {
+    } else if (state === 'new') {
       newElsToken = tokenResponse;
       updateResults("NewELS Connected. Monitoring every 60s...");
       startMonitoring();
@@ -60,33 +61,36 @@ function handleRedirectCallback() {
     
     // Clean up URL
     window.history.replaceState(null, null, window.location.pathname);
-    sessionStorage.removeItem('authType');
   }
 }
 
 // ===============================
-// AUTH HANDLERS
+// AUTH HANDLERS - Manual OAuth2 Flow
 // ===============================
 function authenticateOld() {
-  sessionStorage.setItem('authType', 'old');
-  const tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    prompt: 'select_account',
-    ux_mode: 'redirect'
-  });
-  tokenClient.requestAccessToken();
+  const state = 'old';
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${CLIENT_ID}&` +
+    `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+    `response_type=token&` +
+    `scope=${encodeURIComponent(SCOPES)}&` +
+    `state=${state}&` +
+    `prompt=select_account`;
+  
+  window.location.href = authUrl;
 }
 
 function authenticateNew() {
-  sessionStorage.setItem('authType', 'new');
-  const tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    prompt: 'select_account',
-    ux_mode: 'redirect'
-  });
-  tokenClient.requestAccessToken();
+  const state = 'new';
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+    `client_id=${CLIENT_ID}&` +
+    `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+    `response_type=token&` +
+    `scope=${encodeURIComponent(SCOPES)}&` +
+    `state=${state}&` +
+    `prompt=select_account`;
+  
+  window.location.href = authUrl;
 }
 
 // ===============================
