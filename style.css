@@ -1,0 +1,99 @@
+:root {
+  --bg-dark: #0b1426;       /* Deep navy background */
+  --card-bg: #111b30;     /* Slightly lighter navy for boxes */
+  --text-main: #ffffff;    /* Primary text */
+  --accent-blue: #5cb3ff;  /* Vibrant light blue for headings/links */
+  --border-color: #1e2b45; /* Subtle separation lines */
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--bg-dark);
+  margin: 0;
+  padding: 0;
+  color: var(--text-main);
+}
+
+header {
+  background: var(--bg-dark);
+  padding: 30px 20px;
+  text-align: left; /* Aligned left like your "CTIA Hub" title */
+  border-bottom: 1px solid var(--border-color);
+}
+
+h1 {
+  font-size: 24px;
+  margin: 0;
+  color: var(--text-main);
+}
+
+.subtitle {
+  color: var(--accent-blue);
+  font-weight: bold;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+section {
+  padding: 20px 40px;
+}
+
+h2 {
+  font-size: 18px;
+  color: var(--accent-blue);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+  margin-top: 30px;
+}
+
+.button-row {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+/* Matching the "Open CTIA Toolbox" button style */
+button.primary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent-blue);
+  border: 1px solid #2d3b55;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: all 0.2s ease;
+}
+
+button.primary:hover {
+  background: rgba(92, 179, 255, 0.1);
+  border-color: var(--accent-blue);
+}
+
+.results-box {
+  background: var(--card-bg);
+  padding: 20px;
+  border-radius: 8px;
+  min-height: 150px;
+  margin-top: 10px;
+  border: 1px solid var(--border-color);
+}
+
+/* Styling the log entries */
+.results-box p {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+/* The "New Alert" highlighting */
+.new-alert {
+  color: #fff;
+  border-left: 3px solid var(--accent-blue) !important;
+  background: rgba(92, 179, 255, 0.05);
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

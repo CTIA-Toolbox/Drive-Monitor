@@ -1,0 +1,13 @@
+{
+  "name": "Drive Monitor",
+  "short_name": "DriveMon",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1a73e8",
+  "theme_color": "#1a73e8",
+  "icons": [{
+    "src": "https://cdn-icons-png.flaticon.com/512/2965/2965306.png",
+    "sizes": "512x512",
+    "type": "image/png"
+  }]
+}

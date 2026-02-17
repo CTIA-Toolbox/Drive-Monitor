@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Google Drive Monitor</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+  <header>
+    <h1>Google Drive Monitor</h1>
+    <p class="subtitle">OldELS + NewELS unified visibility</p>
+  </header>
+
+  <section class="auth-section">
+    <h2>Connect Accounts</h2>
+    <div class="button-row">
+      <button id="auth-old" class="primary">Connect OldELS Drive</button>
+      <button id="auth-new" class="primary">Connect NewELS Drive</button>
+    </div>
+  </section>
+
+  <section class="results-section">
+    <h2>Results</h2>
+    <div id="results" class="results-box">
+      <p>No data yet. Authenticate an account to begin.</p>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+  <script src="https://apis.google.com/js/api.js?onload=gapiLoaded"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+</body>
+</html>
